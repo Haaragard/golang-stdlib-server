@@ -18,27 +18,30 @@ type HaaraHttpServer struct {
 }
 
 func NewHaaraHttpServer() *HaaraHttpServer {
-	mux := http.NewServeMux()
+	handler := http.NewServeMux()
+	haaraHttpRouter := NewHaaraHttpRouter(handler)
+	httpServer := &http.Server{Handler: handler}
+
 	haaraHttpServer := &HaaraHttpServer{
 		host:   "0.0.0.0",
 		port:   "8000",
-		server: &http.Server{Handler: mux},
-		router: NewHaaraHttpRouter(mux),
+		server: httpServer,
+		router: haaraHttpRouter,
 	}
 
-	haaraHttpServer.updateSrvAddr()
+	haaraHttpServer.updateServerAddress()
 
 	return haaraHttpServer
 }
 
-func (hhs *HaaraHttpServer) updateSrvAddr() {
+func (hhs *HaaraHttpServer) updateServerAddress() {
 	hhs.server.Addr = fmt.Sprintf("%s:%s", hhs.host, hhs.port)
 }
 
 // host: "0.0.0.0"
 func (hhs *HaaraHttpServer) SetHost(host string) *HaaraHttpServer {
 	hhs.host = host
-	hhs.updateSrvAddr()
+	hhs.updateServerAddress()
 	fmt.Printf("HaaraHttpServer host set to \"%s\"\n", host)
 	return hhs
 }
@@ -46,7 +49,7 @@ func (hhs *HaaraHttpServer) SetHost(host string) *HaaraHttpServer {
 // port: "8000"
 func (hhs *HaaraHttpServer) SetPort(port string) *HaaraHttpServer {
 	hhs.port = port
-	hhs.updateSrvAddr()
+	hhs.updateServerAddress()
 	fmt.Printf("HaaraHttpServer port set to \"%s\"\n", port)
 	return hhs
 }
