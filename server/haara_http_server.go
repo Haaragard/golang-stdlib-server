@@ -40,6 +40,7 @@ func (hhs *HaaraHttpServer) updateSrvAddr() {
 func (hhs *HaaraHttpServer) SetHost(host string) *HaaraHttpServer {
 	hhs.host = host
 	hhs.updateSrvAddr()
+	fmt.Printf("HaaraHttpServer host set to \"%s\"\n", host)
 	return hhs
 }
 
@@ -47,6 +48,7 @@ func (hhs *HaaraHttpServer) SetHost(host string) *HaaraHttpServer {
 func (hhs *HaaraHttpServer) SetPort(port string) *HaaraHttpServer {
 	hhs.port = port
 	hhs.updateSrvAddr()
+	fmt.Printf("HaaraHttpServer port set to \"%s\"\n", port)
 	return hhs
 }
 
@@ -60,5 +62,6 @@ func (hhs *HaaraHttpServer) AddRoute(method, path string, handlerFunc HaaraHttpH
 }
 
 func (hhs *HaaraHttpServer) ServeAndListen() error {
+	fmt.Printf("Server listening on %s:%s\n", hhs.host, hhs.port)
 	return hhs.srv.ListenAndServe()
 }
