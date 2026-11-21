@@ -7,20 +7,15 @@ import (
 	"runtime"
 
 	"github.com/haaragard/stdlib-rest/controller"
+	"github.com/haaragard/stdlib-rest/controller/user"
 	"github.com/haaragard/stdlib-rest/server"
 )
 
 func main() {
 	hhs := server.NewHaaraHttpServer()
 	hhr := hhs.GetRouter()
-	hhr.AddRoute("GET", "/health", controller.HealthHandlerFunc)
-	hhr.Post("/health", controller.HealthHandlerFunc)
-	hhr.Put("/health", controller.HealthHandlerFunc)
-	hhr.Patch("/health", controller.HealthHandlerFunc)
-	hhr.Delete("/health", controller.HealthHandlerFunc)
-	hhr.Get("/health2", controller.HealthHandlerFunc)
-	hhr.Get("/health3", controller.HealthHandlerFunc)
 
+	RegisterAppRoutes(hhr)
 	ListAndPrintRegisteredRoutes(hhs)
 
 	log.Fatal(hhs.ServeAndListen())
@@ -37,4 +32,9 @@ func ListAndPrintRegisteredRoutes(haaraHttpServer *server.HaaraHttpServer) {
 		fmt.Printf("path: \"%s\" | method: \"%s\"\n", routePath, fullName)
 	}
 	fmt.Printf("\n\n")
+}
+
+func RegisterAppRoutes(haaraHttpRouter *server.HaaraHttpRouter) {
+	haaraHttpRouter.Get("/health", controller.HealthHandlerFunc)
+	haaraHttpRouter.Post("/users", user.CreateHandlerFunc)
 }
