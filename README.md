@@ -10,7 +10,11 @@ Has the controllers(HandlerFuncs) to deal with http requests
 
 ### server
 
-Has all the http wrapper essentials as Server, Router(TODO), own handler function interface.
+Has all the http wrapper essentials as Server, Router, own handler function interface.
+
+### container
+
+A service register container for registering services for reusability.
 
 #### HaaraHttpServer
 
@@ -20,7 +24,7 @@ Contains essential data for server definition and handling like `host: "0.0.0.0"
 
 Serves as an interface for Handler Function definition
 
-#### Haara Http Router (TODO)
+#### Haara Http Router
 
 Serves as an wrapper for route definition.
 
