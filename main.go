@@ -6,10 +6,10 @@ import (
 	"reflect"
 	"runtime"
 
-	"github.com/haaragard/stdlib-rest/container"
-	"github.com/haaragard/stdlib-rest/controller"
-	"github.com/haaragard/stdlib-rest/controller/user"
-	"github.com/haaragard/stdlib-rest/server"
+	"github.com/haaragard/golang-stdlib-server/container"
+	"github.com/haaragard/golang-stdlib-server/controller"
+	"github.com/haaragard/golang-stdlib-server/controller/user"
+	"github.com/haaragard/golang-stdlib-server/server"
 )
 
 func main() {
