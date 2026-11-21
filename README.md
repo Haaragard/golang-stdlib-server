@@ -4,17 +4,13 @@ This project serves the purpose of learning golang stdlib while building a simpl
 
 ## Package structure
 
-### controller
+### container
 
-Has the controllers(HandlerFuncs) to deal with http requests
+A service register container for registering services for reusability.
 
 ### server
 
 Has all the http wrapper essentials as Server, Router, own handler function interface.
-
-### container
-
-A service register container for registering services for reusability.
 
 #### HaaraHttpServer
 
@@ -27,6 +23,10 @@ Serves as an interface for Handler Function definition
 #### Haara Http Router
 
 Serves as an wrapper for route definition.
+
+### controller
+
+Has the controllers(HandlerFuncs) to deal with http requests
 
 ## main
 
