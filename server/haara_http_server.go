@@ -13,27 +13,25 @@ type HaaraHttpHandlerFunc func(http.ResponseWriter, *http.Request)
 type HaaraHttpServer struct {
 	host   string
 	port   string
-	srv    *http.Server
-	mux    *http.ServeMux
-	routes map[string]HaaraHttpHandlerFunc
+	server *http.Server
+	router *HaaraHttpRouter
 }
 
 func NewHaaraHttpServer() *HaaraHttpServer {
 	haaraHttpServer := &HaaraHttpServer{
 		host:   "0.0.0.0",
 		port:   "8000",
-		routes: make(map[string]HaaraHttpHandlerFunc),
+		server: &http.Server{Handler: http.NewServeMux()},
+		router: NewHaaraHttpRouter(),
 	}
 
-	haaraHttpServer.mux = http.NewServeMux()
-	haaraHttpServer.srv = &http.Server{Handler: haaraHttpServer.mux}
 	haaraHttpServer.updateSrvAddr()
 
 	return haaraHttpServer
 }
 
 func (hhs *HaaraHttpServer) updateSrvAddr() {
-	hhs.srv.Addr = fmt.Sprintf("%s:%s", hhs.host, hhs.port)
+	hhs.server.Addr = fmt.Sprintf("%s:%s", hhs.host, hhs.port)
 }
 
 // host: "0.0.0.0"
@@ -52,16 +50,11 @@ func (hhs *HaaraHttpServer) SetPort(port string) *HaaraHttpServer {
 	return hhs
 }
 
-// method: "GET"|"POST"|any
-// path: "/any/path"
-func (hhs *HaaraHttpServer) AddRoute(method, path string, handlerFunc HaaraHttpHandlerFunc) *HaaraHttpServer {
-	route := fmt.Sprintf("%s %s", method, path)
-	hhs.routes[route] = handlerFunc
-	hhs.mux.HandleFunc(route, handlerFunc)
-	return hhs
+func (hhs *HaaraHttpServer) GetRouter() *HaaraHttpRouter {
+	return hhs.router
 }
 
 func (hhs *HaaraHttpServer) ServeAndListen() error {
 	fmt.Printf("Server listening on %s:%s\n", hhs.host, hhs.port)
-	return hhs.srv.ListenAndServe()
+	return hhs.server.ListenAndServe()
 }
