@@ -18,11 +18,12 @@ type HaaraHttpServer struct {
 }
 
 func NewHaaraHttpServer() *HaaraHttpServer {
+	mux := http.NewServeMux()
 	haaraHttpServer := &HaaraHttpServer{
 		host:   "0.0.0.0",
 		port:   "8000",
-		server: &http.Server{Handler: http.NewServeMux()},
-		router: NewHaaraHttpRouter(),
+		server: &http.Server{Handler: mux},
+		router: NewHaaraHttpRouter(mux),
 	}
 
 	haaraHttpServer.updateSrvAddr()
