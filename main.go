@@ -1,10 +1,14 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
+	"os"
+	"os/signal"
 	"reflect"
 	"runtime"
+	"syscall"
 
 	"github.com/haaragard/golang-stdlib-server/application"
 	"github.com/haaragard/golang-stdlib-server/controller"
@@ -16,8 +20,15 @@ import (
 )
 
 func main() {
-	databasePool := ConnectDatabase()
-	defer databasePool.Close()
+	// Get Application context
+	context, stop := signal.NotifyContext(
+		context.Background(),
+		syscall.SIGTERM,
+		syscall.SIGKILL,
+		syscall.SIGINT,
+		syscall.SIGQUIT,
+	)
+	defer stop()
 
 	hhs := server.NewHaaraHttpServer()
 	hhr := hhs.GetRouter()
@@ -26,10 +37,16 @@ func main() {
 	ListAndPrintRegisteredRoutes(hhr)
 
 	app := application.NewHaaraApplication(hhs)
-
 	app.RegisterProvider(&provider.Sqlite3DriverProvider{})
 
-	log.Fatal(app.Run())
+	app.Run()
+
+	<-context.Done()
+	if err := app.Stop(context); err != nil {
+		log.Fatalf("could not shutdown: %v\n", err)
+	}
+
+	os.Exit(0)
 }
 
 func ConnectDatabase() database.DatabaseSql {
