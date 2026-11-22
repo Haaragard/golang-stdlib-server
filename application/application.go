@@ -1,7 +1,10 @@
 package application
 
 import (
+	"context"
+	"fmt"
 	"slices"
+	"sync"
 
 	"github.com/haaragard/golang-stdlib-server/container"
 	"github.com/haaragard/golang-stdlib-server/provider"
@@ -9,8 +12,9 @@ import (
 )
 
 type HaaraApplication struct {
-	providers []provider.Provider
+	wg        sync.WaitGroup
 	container *container.HaaraContainer
+	providers []provider.Provider
 	server    *server.HaaraHttpServer
 }
 
@@ -26,28 +30,32 @@ func (app *HaaraApplication) GetContainer() *container.HaaraContainer {
 	return app.container
 }
 
-func (app *HaaraApplication) Run() error {
+func (app *HaaraApplication) Run() {
 	// Start providers
 	app.startProviders()
+	go app.server.ServeAndListen()
+}
 
+func (app *HaaraApplication) Stop(ctx context.Context) error {
 	// Graceful Shutdown for providers
-	defer app.shutdownProviders()
+	app.shutdownProviders()
 
-	err := app.server.ServeAndListen()
-	if err != nil {
-		return err
-	}
+	fmt.Println("Waiting for all HaaraApplication GoRoutines to finish.")
+	app.wg.Wait()
 
-	return nil
+	return app.server.Shutdown(ctx)
 }
 
 func (app *HaaraApplication) RegisterProvider(provider provider.Provider) {
+	provider.SetContainer(app.container)
+	provider.SetWaitGroup(&app.wg)
 	app.providers = append(app.providers, provider)
 }
 
 func (app *HaaraApplication) startProviders() {
 	for _, provider := range app.providers {
-		provider.OnStart()
+		app.wg.Add(1)
+		go provider.OnStart()
 	}
 }
 
@@ -57,6 +65,7 @@ func (app *HaaraApplication) shutdownProviders() {
 
 	slices.Reverse(providersCopy)
 	for _, provider := range providersCopy {
-		provider.OnShutdown()
+		app.wg.Add(1)
+		go provider.OnShutdown()
 	}
 }
