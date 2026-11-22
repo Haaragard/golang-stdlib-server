@@ -3,8 +3,12 @@ package application
 import (
 	"context"
 	"fmt"
+	"log"
+	"os"
+	"os/signal"
 	"slices"
 	"sync"
+	"syscall"
 
 	"github.com/haaragard/golang-stdlib-server/container"
 	"github.com/haaragard/golang-stdlib-server/provider"
@@ -30,10 +34,31 @@ func (app *HaaraApplication) GetContainer() *container.HaaraContainer {
 	return app.container
 }
 
+// Is a thread blocking feature.
 func (app *HaaraApplication) Run() {
+	// Get application context and OS signals
+	context, stop := signal.NotifyContext(
+		context.Background(),
+		syscall.SIGTERM, // - sent to a process to request its termination. Most commonly used, and we’ll be focusing on it later.
+		syscall.SIGKILL, // - “quit immediately”, can not be interfered with.
+		syscall.SIGINT,  // - interrupt signal (such as Ctrl+C)
+		syscall.SIGQUIT, // - quit signal (such as Ctrl+D)
+	)
+	defer stop()
+
 	// Start providers
 	app.startProviders()
+
+	// Dispatch server ServeAndListen to GoRoutine.
 	go app.server.ServeAndListen()
+
+	<-context.Done()
+	if err := app.Stop(context); err != nil {
+		log.Fatalf("could not shutdown: %v\n", err)
+	}
+
+	// Ends program
+	os.Exit(0)
 }
 
 func (app *HaaraApplication) Stop(ctx context.Context) error {
