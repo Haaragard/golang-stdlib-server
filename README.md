@@ -8,6 +8,14 @@ This project serves the purpose of learning golang stdlib while building a simpl
 
 A service register container for registering services for reusability.
 
+### application
+
+Is the application wrapper for service provisions throught `ServiceProviders` implementation and registrarion. Controls the application Container instances and workflow.
+
+### provider
+
+Is the `ServiceProviders` definition for the application control workflow on service provisioning. Serves as the startup, warmup and shutdown for each and every resource used.
+
 ### server
 
 Has all the http wrapper essentials as Server, Router, own handler function interface.
