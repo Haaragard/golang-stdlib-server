@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 )
@@ -61,4 +62,8 @@ func (hhs *HaaraHttpServer) GetRouter() *HaaraHttpRouter {
 func (hhs *HaaraHttpServer) ServeAndListen() error {
 	fmt.Printf("Server listening on %s:%s\n", hhs.host, hhs.port)
 	return hhs.server.ListenAndServe()
+}
+
+func (hhs *HaaraHttpServer) Shutdown(ctx context.Context) error {
+	return hhs.server.Shutdown(ctx)
 }
