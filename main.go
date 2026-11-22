@@ -9,32 +9,36 @@ import (
 	"github.com/haaragard/golang-stdlib-server/container"
 	"github.com/haaragard/golang-stdlib-server/controller"
 	"github.com/haaragard/golang-stdlib-server/controller/user"
+	"github.com/haaragard/golang-stdlib-server/infrastructure/database"
 	"github.com/haaragard/golang-stdlib-server/server"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 func main() {
+	container := container.NewHaaraContainer()
+
+	databasePool := ConnectDatabase()
+	defer databasePool.Close()
+
+	container.RegisterDynamic(databasePool)
+
 	hhs := server.NewHaaraHttpServer()
 	hhr := hhs.GetRouter()
 
 	RegisterAppRoutes(hhr)
-	ListAndPrintRegisteredRoutes(hhs)
-
-	TestHaaraContainerInstances()
+	ListAndPrintRegisteredRoutes(hhr)
 
 	log.Fatal(hhs.ServeAndListen())
 }
 
-func ListAndPrintRegisteredRoutes(haaraHttpServer *server.HaaraHttpServer) {
-	hhr := haaraHttpServer.GetRouter()
-	fmt.Printf("\n\nRoute List:\n")
-	listRoutes := hhr.GetRoutes()
-	for routePath, routeHandlerFunc := range listRoutes {
-		pc := reflect.ValueOf(routeHandlerFunc).Pointer()
-		fullName := runtime.FuncForPC(pc).Name()
-
-		fmt.Printf("path: \"%s\" | method: \"%s\"\n", routePath, fullName)
+func ConnectDatabase() database.DatabaseSql {
+	dsn := "file:database.db?cache=shared"
+	pool, err := database.NewDatabaseSqlite3Driver(dsn)
+	if err != nil {
+		panic(err)
 	}
-	fmt.Printf("\n\n")
+
+	return pool
 }
 
 func RegisterAppRoutes(haaraHttpRouter *server.HaaraHttpRouter) {
@@ -42,39 +46,14 @@ func RegisterAppRoutes(haaraHttpRouter *server.HaaraHttpRouter) {
 	haaraHttpRouter.Post("/users", user.CreateHandlerFunc)
 }
 
-type TesTruct struct {
-	ValueOne string
-	ValueTwo int
-}
+func ListAndPrintRegisteredRoutes(haaraHttpRouter *server.HaaraHttpRouter) {
+	fmt.Printf("\n\nRoute List:\n")
+	listRoutes := haaraHttpRouter.GetRoutes()
+	for routePath, routeHandlerFunc := range listRoutes {
+		pc := reflect.ValueOf(routeHandlerFunc).Pointer()
+		fullName := runtime.FuncForPC(pc).Name()
 
-func TestHaaraContainerInstances() {
-	container := container.NewHaaraContainer()
-
-	// Registers testTruct1 in container
-	container.RegisterDynamic(&TesTruct{
-		ValueOne: "teste 1",
-		ValueTwo: 1,
-	})
-
-	// Registers tesTruct2 in container, overriding tesTruct1
-	container.RegisterDynamic(&TesTruct{
-		ValueOne: "teste 2",
-		ValueTwo: 2,
-	})
-
-	// The "*TesTruct" (*) is necessary, because we registered a pointer (&TesTruct).
-	// The ".(*TesTruct)" is necessary too, because we are causing a conversion from "any"
-	// to "*TesTruct" that was registered.
-	tesTructReturned, ok := container.Resolve(reflect.TypeFor[*TesTruct]()).(*TesTruct)
-	if !ok {
-		fmt.Printf("Values does not match")
-		return
+		fmt.Printf("path: \"%s\" | method: \"%s\"\n", routePath, fullName)
 	}
-
-	fmt.Printf("\n\n\nContainer registration and retrieval test:\n")
-	fmt.Printf(
-		"the tesTruct returned has the values {valueOne: %s} and {valueTwo: %d}\n",
-		tesTructReturned.ValueOne,
-		tesTructReturned.ValueTwo,
-	)
+	fmt.Printf("\n\n")
 }
