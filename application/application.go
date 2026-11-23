@@ -7,8 +7,8 @@ import (
 	"os"
 	"os/signal"
 	"slices"
-	"sync"
 	"syscall"
+	"time"
 
 	"github.com/haaragard/golang-stdlib-server/container"
 	"github.com/haaragard/golang-stdlib-server/provider"
@@ -16,7 +16,6 @@ import (
 )
 
 type HaaraApplication struct {
-	wg        sync.WaitGroup
 	container *container.HaaraContainer
 	providers []provider.Provider
 	server    *server.HaaraHttpServer
@@ -53,35 +52,36 @@ func (app *HaaraApplication) Run() {
 	go app.server.ServeAndListen()
 
 	<-context.Done()
-	if err := app.Stop(context); err != nil {
-		log.Fatalf("could not shutdown: %v\n", err)
-	}
+	app.Stop(context)
 
 	// Ends program
 	os.Exit(0)
 }
 
-func (app *HaaraApplication) Stop(ctx context.Context) error {
+func (app *HaaraApplication) Stop(ctx context.Context) {
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	fmt.Println("\nStopping server...")
+	if err := app.server.Shutdown(shutdownCtx); err != nil {
+		log.Fatalf("error on server shutdown: %v", err)
+	}
+
 	// Graceful Shutdown for providers
 	app.shutdownProviders()
-
-	fmt.Println("Waiting for all HaaraApplication GoRoutines to finish.")
-	app.wg.Wait()
-
-	return app.server.Shutdown(ctx)
 }
 
 func (app *HaaraApplication) RegisterProvider(provider provider.Provider) {
 	provider.SetContainer(app.container)
-	provider.SetWaitGroup(&app.wg)
 	app.providers = append(app.providers, provider)
 }
 
 func (app *HaaraApplication) startProviders() {
+	fmt.Println("\nRunning start for every provider...")
 	for _, provider := range app.providers {
-		app.wg.Add(1)
-		go provider.OnStart()
+		provider.OnStart()
 	}
+	fmt.Println("Start for providers is finished.\n")
 }
 
 func (app *HaaraApplication) shutdownProviders() {
@@ -89,8 +89,9 @@ func (app *HaaraApplication) shutdownProviders() {
 	copy(providersCopy, app.providers)
 
 	slices.Reverse(providersCopy)
+	fmt.Println("\nRunning shutdown for every provider...")
 	for _, provider := range providersCopy {
-		app.wg.Add(1)
-		go provider.OnShutdown()
+		provider.OnShutdown()
 	}
+	fmt.Println("Shutdown for providers is finished.\n")
 }
