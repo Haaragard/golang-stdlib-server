@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"os"
 	"os/signal"
 	"slices"
 	"syscall"
@@ -53,9 +52,6 @@ func (app *HaaraApplication) Run() {
 
 	<-context.Done()
 	app.Stop(context)
-
-	// Ends program
-	os.Exit(0)
 }
 
 func (app *HaaraApplication) Stop(ctx context.Context) {
